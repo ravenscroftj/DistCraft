@@ -1,0 +1,5 @@
+Discraft is largely self-contained and can fall back to a simple 'pure python'
+mode if necessary. However, to speed up Distcraft and reduce its footprint, it 
+is recommended that the following libraries are installed:
+
+Python-libxml2

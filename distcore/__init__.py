@@ -1,7 +1,38 @@
+'''
+The Distcraft core module contains all basic core definitions for the engine
+including communications modules and parsers. Non-essential, customisable parts
+of the program such as physics and graphics engines are 'plugins' and are not
+part of the core
+
+@author: James Ravenscroft
+'''
+
 import socket
 import threading
+
+class EventHandlerException(Exception):
+    '''Exception thrown when the event handler has problems'''
+    def __init__(self, message,eventname):
+        Exception.__init__("Error while handling event '%s', %s" % 
+                                                    (message,eventname))
+        
+class CoreListenWorker(threading.Thread):
+    '''This class is used to handle incoming client requests'''
     
-    
+    def __init__(self, clientsocket, clientaddress):
+        #initialse thread around this class
+        threading.Thread.__init__(self)
+        #store client socket and address
+        self.socket = clientsocket
+        self.addr = clientaddress
+        
+    def run(self):
+        '''Thread allows the worker to run and talk to the client'''
+        
+        #send the user hello message and wait for a response
+        self.socket.send("<message>hello</message>")
+        self.socket.close()
+
 
 class DistCore(object):
     
@@ -63,27 +94,3 @@ class DistCore(object):
         c = CoreListenWorker(clientsocket, clientaddress)
         
         c.start()
-        
-
-class EventHandlerException(Exception):
-    '''Exception thrown when the event handler has problems'''
-    def __init__(self, message,eventname):
-        Exception.__init__("Error while handling event '%s', %s" % 
-                                                    (message,eventname))
-        
-class CoreListenWorker(threading.Thread):
-    '''This class is used to handle incoming client requests'''
-    
-    def __init__(self, clientsocket, clientaddress):
-        #initialse thread around this class
-        threading.Thread.__init__(self)
-        #store client socket and address
-        self.socket = clientsocket
-        self.addr = clientaddress
-        
-    def run(self):
-        '''Thread allows the worker to run and talk to the client'''
-        
-        #send the user hello message and wait for a response
-        self.socket.send("<message>hello</message>")
-        self.socket.close()

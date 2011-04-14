@@ -1,0 +1,12 @@
+DISTCRAFT - Distributed Game Engine
+-------------------------------------
+
+Distcraft is a distributed MMO engine written primarily in Python (C/C++ 
+development is planned once a working pythonic implementation has been
+created).
+
+It is experimental and is currently only an engine, not a fully fledged game.
+
+If you want to get involved or find out more, contact the creator:
+
+James Ravenscroft <james (at) funkymonkeysoftware (dot) com>

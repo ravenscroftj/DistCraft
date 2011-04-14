@@ -46,6 +46,12 @@ class DistCore(object):
     with the core and fired by subprocesses'''
     _evt_handlers = {}
     
+    '''Flag raised when debug mode is enabled at the commandline'''
+    debug = False
+    
+    '''Flag raised when verbose mode is enabled at commandline'''
+    verbose = False
+    
     def __init__(self):
         #build an incoming socket for clients to join up with
         self.insock = socket.socket()
@@ -87,7 +93,17 @@ class DistCore(object):
             self.log("ERROR", "No event handler registered for %s" % event)
             
     def log(self, level, message):
+        '''
+        Log an event or a problem in the core
+        '''
+        if(level == "DEBUG" & self.debug == False):
+            return
+        
+        if(level == "NOTICE" & self.verbose == False):
+            return
+        
         print "[ %s ] %s]" % (level,message)
+        
         
     def _onAcceptClient(self, clientsocket, clientaddress):
         '''Accept an incoming connection from a client '''

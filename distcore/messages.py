@@ -9,7 +9,8 @@ import xml.dom.minidom
 import base64
 import zlib
 
-MIN_PROTOCOL_VERSION = 0.1
+_CURRENT_MESSAGE_VERSION = 0.1
+_MIN_PROTOCOL_VERSION = 0.1
 
 class MessageProtocolException(Exception):
     '''Exception thrown when a badly formed message is received.'''
@@ -17,6 +18,7 @@ class MessageProtocolException(Exception):
     def __init__(self, version, message):
         Exception.__init__(self, " [DMP Version %f] %s" % (version, message) )
 
+#----------------------------------------------------------------------------#
 
 class MessageParser:
     '''The message parser reads XML messages from the remote host
@@ -85,7 +87,7 @@ class MessageParser:
         if(name == "message"):
             self.messageStatus = "transmitting"
             #make sure the protocol is compatible
-            if( attrs['version'] < MIN_PROTOCOL_VERSION ):
+            if( float(attrs['version']) < _MIN_PROTOCOL_VERSION ):
                 MessageProtocolException( attrs['version'], 
                 "The client is using a version of the protocol that is too old.")
         
@@ -124,7 +126,7 @@ class MessageParser:
                 param = int(data)
             if(self.argType == "float"):
                 param = float(data)
-            if(self.argType == "string"):
+            else:
                 param = str(data)
                 
             #add the parameter to the list for this event
@@ -149,7 +151,7 @@ class MessageParser:
         args = self.eventArgs
         self.broadcastCore.fireEvent(self.eventName, *args)
 
-
+#----------------------------------------------------------------------------#
 
 class MessageBuilder:
     '''The message builder allows the generation of XML messages to be 
@@ -160,3 +162,41 @@ class MessageBuilder:
     def __init__(self):
         self.doc = xml.dom.minidom.Document()
         
+        #define the message element and the protocol version
+        self.messageEl = self.doc.createElement("message")
+        self.messageEl.setAttribute("version", str(_CURRENT_MESSAGE_VERSION))
+        
+        self.doc.appendChild(self.messageEl)
+        
+    def addEvent(self, eventname, *args):
+        '''Add an event to the message to pass to the connected party
+        '''
+        eventEl = self.doc.createElement("event")
+        eventEl.setAttribute("name", eventname)
+        
+        #get the event args
+        for arg in args:
+            
+            #get the type of the arg
+            type = arg.__class__.__name__
+            
+            if( (type != "int") & (type != "float")):
+                type = "string"
+            
+            #store argument type
+            argEl = self.doc.createElement("argument")
+            argEl.setAttribute("type", type)
+            
+            #get argument data
+            argData = self.doc.createCDATASection(str(arg))
+            argEl.appendChild(argData)
+            
+            #append argument to event
+            eventEl.appendChild(argEl)
+            
+        #add the event to the document
+        self.messageEl.appendChild(eventEl)
+
+    def getMessage(self):
+        return self.doc.toxml()
+    

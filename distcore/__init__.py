@@ -10,29 +10,16 @@ part of the core
 import socket
 import threading
 
+import distcore.messages
+
 class EventHandlerException(Exception):
     '''Exception thrown when the event handler has problems'''
     def __init__(self, message,eventname):
         Exception.__init__("Error while handling event '%s', %s" % 
                                                     (message,eventname))
         
-class CoreListenWorker(threading.Thread):
-    '''This class is used to handle incoming client requests'''
-    
-    def __init__(self, clientsocket, clientaddress):
-        #initialse thread around this class
-        threading.Thread.__init__(self)
-        #store client socket and address
-        self.socket = clientsocket
-        self.addr = clientaddress
-        
-    def run(self):
-        '''Thread allows the worker to run and talk to the client'''
-        
-        #send the user hello message and wait for a response
-        self.socket.send("<message>hello</message>")
-        self.socket.close()
 
+#--------------------------------------------------------------------------#
 
 class DistCore(object):
     
@@ -108,5 +95,22 @@ class DistCore(object):
     def _onAcceptClient(self, clientsocket, clientaddress):
         '''Accept an incoming connection from a client '''
         c = CoreListenWorker(clientsocket, clientaddress)
-        
         c.start()
+
+#---------------------------------------------------------------------------#
+        
+class CoreListenWorker(threading.Thread):
+    '''This class is used to handle incoming client requests'''
+    
+    def __init__(self, clientsocket, clientaddress):
+        #initialse thread around this class
+        threading.Thread.__init__(self)
+        #store client socket and address
+        self.socket = clientsocket
+        self.addr = clientaddress
+        
+    def run(self):
+        '''Thread allows the worker to run and talk to the client'''
+        
+        #send the user hello message and wait for a response
+        m = distcore.messages.MessageBuilder()

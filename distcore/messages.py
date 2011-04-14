@@ -158,7 +158,6 @@ class MessageBuilder:
     sent to the remote host.
 
     '''
-
     def __init__(self):
         self.doc = xml.dom.minidom.Document()
         
@@ -198,5 +197,5 @@ class MessageBuilder:
         self.messageEl.appendChild(eventEl)
 
     def getMessage(self):
+        '''Return the XML message to the caller'''
         return self.doc.toxml()
-    

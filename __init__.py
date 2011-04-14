@@ -9,7 +9,7 @@ import optparse
 
 from distcore import DistCore
 
-DEFAULT_PORT = 1221
+DEFAULT_PORT = 1234
 
 def main():    
     d = DistCore()
@@ -29,6 +29,7 @@ def main():
         d.verbose = True
         d.debug = True
         
+    d.serve(opts.port)
         
 #If we are running this as the main module, run the main function
 if __name__ == "__main__":

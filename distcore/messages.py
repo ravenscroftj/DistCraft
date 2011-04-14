@@ -56,22 +56,38 @@ class MessageParser:
     '''The type of the argument currently being parsed'''
     argType = None
 
-    def __init__(self, core):
+    def __init__(self, core, source):
         ''' Create and set up the message parser
         '''
 
         #set up the xml parser stuff
+        self.resetParser()
+        
+        #store the event source
+        self.eventSource = source
+
+        #set up the broadcast core stuff
+        self.broadcastCore = core
+
+    def resetParser(self):
         self.parser = xml.parsers.expat.ParserCreate()
         self.parser.StartElementHandler = self._start_element
         self.parser.EndElementHandler = self._end_element
         self.parser.CharacterDataHandler = self._char_data
 
-        #set up the broadcast core stuff
-        self.broadcastCore = core
-
     def feed(self, chars):
         '''Send some characters to the XML parser'''
-        self.parser.Parse(chars)
+        try:
+            self.parser.Parse(chars)
+        except xml.parsers.expat.ExpatError:
+            
+            #reset the parser
+            self.resetParser()
+            
+            #tell the user the parse failed
+            raise MessageProtocolException(_CURRENT_MESSAGE_VERSION,
+            " Malformed message. Not proper xml!")
+            
 
     def _start_element(self, name, attrs):
         '''Handle the beginning of a new XML element in the message
@@ -87,35 +103,40 @@ class MessageParser:
         if(name == "message"):
             self.messageStatus = "transmitting"
             #make sure the protocol is compatible
+
+            if not (attrs.has_key("version")):
+                raiseMessageProtocolException( _CURRENT_MESSAGE_VERSION, 
+                "No protocol version provided. This specification is mandatory")
+            
             if( float(attrs['version']) < _MIN_PROTOCOL_VERSION ):
-                MessageProtocolException( attrs['version'], 
+                raise MessageProtocolException( attrs['version'], 
                 "The client is using a version of the protocol that is too old.")
         
         if(name == "event"):
             if(self.parsingEvent == False):
                 self.parsingEvent = True
             else:
-                MessageProtocolException( attrs['version'], 
+                raise MessageProtocolException( attrs['version'], 
                 "Malformed message: nested events not supported.")
                 
             #get the name of the event
             if(attrs.has_key("name")):
                 self.eventName = attrs['name']
             else:
-                MessageProtocolException( attrs['version'], 
+                raise MessageProtocolException( attrs['version'], 
                 "Malformed message: events must provide a name")
             
         if(name == "argument"):
             #if we are not inside an event, this shouldn't be here
             if(self.parsingEvent == False):
-                MessageProtocolException( attrs['version'], 
+                raise MessageProtocolException( attrs['version'], 
                 "Malformed message: argument must be part of an event.")
             else:
                 #see what type of argument we have
                 if(attrs.has_key("type")):
                     self.argType = attrs['type']
                 else:
-                    MessageProtocolException( attrs['version'], 
+                    raise MessageProtocolException( attrs['version'], 
                     "Malformed message: Event arguments must provide a type")
 
     def _char_data(self, data):
@@ -149,7 +170,7 @@ class MessageParser:
     def _processEvent(self):
         '''Process information gathered during an event parse'''
         args = self.eventArgs
-        self.broadcastCore.fireEvent(self.eventName, *args)
+        self.broadcastCore.fireEvent(self.eventName, self.eventSource,  *args)
 
 #----------------------------------------------------------------------------#
 
